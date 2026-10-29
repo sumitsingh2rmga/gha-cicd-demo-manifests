@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: gha-cicd-demo
-          image: ghcr.io/goswami97/gha-cicd-demo:3118c7a26fde1c0d22f68d341b64c45aaffcb4fd
+          image: sumitsinghrmga/gha-cicd-demo:ce8374f6168f97ae1939fd318822fcae387d4df3
           env:
             - name: DEPLOY_ENV
               value: development

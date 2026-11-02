@@ -1,10 +1,18 @@
+# Three Argo CD Applications, one per environment folder of this manifests repo.
+# Apply ONCE from your laptop:   kubectl apply -f argocd-apps/application.yml
+# Argo CD itself does not read this file from Git; it only watches the three folders below.
+#
+# Namespaces match the hard-coded "namespace:" values inside your manifests
+# (development, qa, production).
+
+# ---------------------------------------------------------------- development
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: myapp-dev
+  name: gha-cicd-demo-development
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoproj.io   # deleting the Application also deletes what it deployed
+    - resources-finalizer.argocd.argoproj.io   # deleting this Application also removes what it deployed
 spec:
   project: default
   source:
@@ -13,7 +21,7 @@ spec:
     path: development
   destination:
     server: https://kubernetes.default.svc
-    namespace: dev
+    namespace: development
   syncPolicy:
     automated:
       prune: true
@@ -26,3 +34,54 @@ spec:
         duration: 10s
         factor: 2
         maxDuration: 2m
+---
+# ------------------------------------------------------------------------ qa
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gha-cicd-demo-qa
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/sumitsingh2rmga/gha-cicd-demo-manifests.git
+    targetRevision: main
+    path: qa
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: qa
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 2m
+---
+# ----------------------------------------------------------------- production
+# No "automated" block: a person must review the diff and click Sync in Argo CD.
+# No finalizer: deleting this Application will NOT delete production resources by accident.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gha-cicd-demo-production
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/sumitsingh2rmga/gha-cicd-demo-manifests.git
+    targetRevision: main
+    path: production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

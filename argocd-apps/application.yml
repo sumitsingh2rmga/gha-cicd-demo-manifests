@@ -3,25 +3,26 @@ kind: Application
 metadata:
   name: myapp-dev
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io   # deleting the Application also deletes what it deployed
 spec:
   project: default
   source:
-    repoURL: https://github.com/sumitsingh2rmga/eks-gitops-demo-minikube.git   # <-- change
+    repoURL: https://github.com/sumitsingh2rmga/gha-cicd-demo-manifests.git
     targetRevision: main
-    path: k8s/overlays/dev
+    path: development
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo
-  # The HPA owns the replica count, so Argo CD must not "heal" it back to the Git value.
-  ignoreDifferences:
-    - group: apps
-      kind: Deployment
-      jsonPointers:
-        - /spec/replicas
+    namespace: dev
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - RespectIgnoreDifferences=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 2m
